@@ -63,12 +63,12 @@ jobs:
             jsr_json="$dir/jsr.json"
 
             if [[ -f "$package_json" && -f "$jsr_json" ]]; then
-              jq '.version = "${{ steps.release_tag.outputs.version }}"' $jsr_json > $jsr_json
+              jq '.version = ${{ steps.release_tag.outputs.version }}' $jsr_json > $jsr_json
             fi
           done < <(find "./packages" -type d)
-          - name: Build Packages
-          run: pnpm run -r build
-  
+
+      - name: Build Packages
+        run: pnpm run -r build  
   
       - name: Create release
         id: create_release
@@ -84,10 +84,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
-          pnpm config set //npm.pkg.github.com/:_authToken $NODE_AUTH_TOKEN
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
 
       - name: Publish to GitHub Packages
-        run: pnpm publish -r --access public --publish-branch main
+        run: pnpm publish -r --access public --publish-branch tag-build-publish-action
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

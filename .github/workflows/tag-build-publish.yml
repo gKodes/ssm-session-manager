@@ -105,5 +105,5 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Tag, Build & Release
-          file_pattern: **/*.json
+          file_pattern: '**/*.json'
           skip_checkout: true

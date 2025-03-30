@@ -64,6 +64,7 @@ jobs:
 
             if [[ -f "$package_json" && -f "$jsr_json" ]]; then
               jq '.version = ${{ steps.release_tag.outputs.version }}' $jsr_json > $jsr_json
+              jq '.version = ${{ steps.release_tag.outputs.version }}' $package_json > $package_json
             fi
           done < <(find "./packages" -type d)
 
@@ -104,5 +105,5 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Tag, Build & Release
-          file_pattern: "**/*.json"
+          file_pattern: **/*.json
           skip_checkout: true

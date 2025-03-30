@@ -63,13 +63,17 @@ jobs:
             jsr_json="$dir/jsr.json"
 
             if [[ -f "$package_json" && -f "$jsr_json" ]]; then
+              echo $jsr_json
+              echo $package_json
+
+              cat $package_json
+              cat $jsr_json
+
               jq '.version = ${{ steps.release_tag.outputs.version }}' $jsr_json > $jsr_json
               jq '.version = ${{ steps.release_tag.outputs.version }}' $package_json > $package_json
 
               jq '.version' $package_json
 
-              echo $jsr_json
-              echo $package_json
               cat $package_json
               cat $jsr_json
             fi

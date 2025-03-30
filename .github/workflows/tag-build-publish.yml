@@ -87,7 +87,7 @@ jobs:
           pnpm config set registry https://npm.pkg.github.com/
           pnpm config set //npm.pkg.github.com/:_authToken $NODE_AUTH_TOKEN
           pnpm config set always-auth true
-          pnpm publish -r --access public --publish-branch tag-build-publish-action --registry=https://npm.pkg.github.com/
+          pnpm publish -r --access public --publish-branch main --registry=https://npm.pkg.github.com/
 
       # - name: Authenticate with npm
       #   if: success()

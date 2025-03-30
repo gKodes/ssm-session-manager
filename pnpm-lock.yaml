@@ -32,7 +32,7 @@ importers:
   packages/ssm-session-manager:
     dependencies:
       '@gkodes/smux':
-        specifier: link:../smux
+        specifier: file:../smux
         version: link:../smux
       eventemitter3:
         specifier: ^5.0.1

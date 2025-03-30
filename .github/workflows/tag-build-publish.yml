@@ -44,6 +44,11 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Set-up git user
+        run: |
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        
       - name: Bump Versions
         run: pnpm version ${{ inputs.version }}
 

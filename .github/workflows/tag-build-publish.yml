@@ -50,14 +50,25 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
         
       - name: Bump Versions
-        run: pnpm version ${{ inputs.version }}
+        run: pnpm run -r version ${{ inputs.version }}
 
       - name: Build Packages
         run: pnpm run -r build
 
       - name: Get release version
         id: release_tag
-        run: echo "version=$(jq '.version' ./packages/ssm-session-manager/package.json)" >> $GITHUB_OUTPUT;
+        run: echo "version=$(jq '.version' ./package.json)" >> $GITHUB_OUTPUT;
+
+      - name: Update version in packages
+        run: |
+          while IFS= read -r dir; do
+            package_json="$dir/package.json"
+            jsr_json="$dir/jsr.json"
+
+            if [[ -f "$package_json" && -f "$jsr_json" ]]; then
+              jq ".version = ${{ steps.release_tag.outputs.version }}" $jsr_json > $jsr_json
+            fi
+          done < <(find "./packages" -type d)
 
       - name: Create release
         id: create_release
@@ -76,7 +87,7 @@ jobs:
           pnpm config set //npm.pkg.github.com/:_authToken $NODE_AUTH_TOKEN
 
       - name: Publish to GitHub Packages
-        run: pnpm publish -r --access public
+        run: pnpm publish -r --access public --publish-branch main
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -92,17 +103,6 @@ jobs:
       #   run: pnpm publish -r --access public
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Update JSR Version
-        run: |
-          while IFS= read -r dir; do
-            package_json="$dir/package.json"
-            jsr_json="$dir/jsr.json"
-
-            if [[ -f "$package_json" && -f "$jsr_json" ]]; then
-              jq ".version = $(jq '.version' $package_json)" $jsr_json > $jsr_json
-            fi
-          done < <(find "./packages" -type d)
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:

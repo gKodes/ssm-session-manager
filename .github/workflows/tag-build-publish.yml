@@ -64,7 +64,6 @@ jobs:
 
             if [[ -f "$package_json" && -f "$jsr_json" ]]; then
               jq '.version = ${{ steps.release_tag.outputs.version }}' $jsr_json > $jsr_json;
-              jq '.version = ${{ steps.release_tag.outputs.version }}' $package_json;
               jq '.version = ${{ steps.release_tag.outputs.version }}' $package_json > $package_json;
             fi
           done < <(find "./packages" -type d)

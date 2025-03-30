@@ -86,7 +86,7 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
           echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
-          pnpm publish -r --access public --publish-branch tag-build-publish-action
+          pnpm publish -r --access public --publish-branch tag-build-publish-action --registry=https://registry.npmjs.org/
 
       # - name: Authenticate with npm
       #   if: success()

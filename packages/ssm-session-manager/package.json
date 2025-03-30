@@ -1,6 +1,6 @@
 {
   "name": "@gkodes/ssm-session-manager",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "library designed to simplify establishing and managing AWS SSM Session",
   "type": "module",
   "main": "dist/index.cjs",
@@ -17,7 +17,14 @@
     "lint": "eslint . --ext .ts",
     "test": "vitest"
   },
-  "keywords": ["aws", "ssm", "session", "port", "forward", "terminal"],
+  "keywords": [
+    "aws",
+    "ssm",
+    "session",
+    "port",
+    "forward",
+    "terminal"
+  ],
   "author": "Kamalakar Gadireddy",
   "license": "MIT",
   "packageManager": "pnpm@10.7.0",

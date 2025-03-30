@@ -1,6 +1,6 @@
 {
   "name": "@gkodes/smux",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A Stream Multiplexing Library based on https://github.com/xtaci/smux",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

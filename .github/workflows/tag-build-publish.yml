@@ -53,7 +53,7 @@ jobs:
         run: pnpm version ${{ inputs.version }}
 
       - name: Build Packages
-        run: pnpm run build
+        run: pnpm run -r build
 
       - name: Get release version
         id: release_tag

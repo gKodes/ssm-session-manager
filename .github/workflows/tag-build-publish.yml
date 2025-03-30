@@ -1,0 +1,104 @@
+name: Tag, Build and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: choice
+        description: Semver Bump
+        default: patch
+        options:
+          - major
+          - minor
+          - patch
+          - premajor
+          - preminor
+          - prepatch
+          - prerelease
+          - from-git
+
+jobs:
+  tag-build-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org/"
+          cache: "pnpm"
+
+      - name: Install PNPM
+        run: npm install -g pnpm
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Bump Versions
+        run: pnpm version ${{ inputs.version }}
+
+      - name: Build Packages
+        run: pnpm run build
+
+      - name: Get release version
+        id: release_tag
+        run: echo "version=$(jq '.version' ./packages/ssm-session-manager/package.json)" >> $GITHUB_OUTPUT;
+
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prerelease: "!endsWith(github.ref, 'main')"
+          tag_name: ${{ steps.release_tag.outputs.version }}
+
+      - name: Authenticate with GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+          pnpm config set //npm.pkg.github.com/:_authToken $NODE_AUTH_TOKEN
+
+      - name: Publish to GitHub Packages
+        run: pnpm publish -r --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Authenticate with npm
+      #   if: success()
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #   run: |
+      #     echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+      #     pnpm config set //registry.npmjs.org/:_authToken $NODE_AUTH_TOKEN
+
+      # - name: Publish to npm
+      #   run: pnpm publish -r --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update JSR Version
+        run: |
+          while IFS= read -r dir; do
+            package_json="$dir/package.json"
+            jsr_json="$dir/jsr.json"
+
+            if [[ -f "$package_json" && -f "$jsr_json" ]]; then
+              jq ".version = $(jq '.version' $package_json)" $jsr_json > $jsr_json
+            fi
+          done < <(find "./packages" -type d)
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Tag, Build & Release
+          file_pattern: "**/*.json"
+          skip_checkout: true

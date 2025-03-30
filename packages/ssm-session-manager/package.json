@@ -1,0 +1,46 @@
+{
+  "name": "@gkodes/ssm-session-manager",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Kamalakar Gadireddy",
+  "license": "MIT",
+  "packageManager": "pnpm@10.7.0",
+  "devDependencies": {
+    "@aws-sdk/client-ssm": "^3.775.0",
+    "@types/node": "^22.13.13",
+    "@types/ws": "^8.18.0",
+    "eslint": "^9.23.0",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9",
+    "winston": "^3.17.0",
+    "ws": "^8.18.1"
+  },
+  "dependencies": {
+    "@gkodes/smux": "file:../smux",
+    "eventemitter3": "^5.0.1",
+    "uuid": "^11.1.0"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-ssm": "^3.775.0",
+    "ws": "^8.18.1"
+  }
+}

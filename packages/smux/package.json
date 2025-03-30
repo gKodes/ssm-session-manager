@@ -1,0 +1,47 @@
+{
+  "name": "@gkodes/smux",
+  "version": "0.0.0",
+  "description": "A Stream Multiplexing Library based on https://github.com/xtaci/smux",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gKodes/ssm-session-manager.git"
+  },
+  "keywords": [
+    "Stream",
+    "Multiplexing",
+    "Library",
+    "xtaci",
+    "smux",
+    "aws",
+    "ssm"
+  ],
+  "author": "Kamalakar Gadireddy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gKodes/ssm-session-manager/issues"
+  },
+  "homepage": "https://github.com/gKodes/ssm-session-manager#readme",
+  "devDependencies": {
+    "@types/node": "^22.13.13",
+    "eslint": "^9.23.0",
+    "prettier": "^3.5.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  },
+  "packageManager": "pnpm@10.7.0"
+}

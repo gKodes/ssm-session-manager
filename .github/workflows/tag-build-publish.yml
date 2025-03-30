@@ -79,18 +79,14 @@ jobs:
           prerelease: "!endsWith(github.ref, 'main')"
           tag_name: ${{ steps.release_tag.outputs.version }}
 
-      - name: Authenticate with GitHub Packages
+      - name: Authenticate and publish to GitHub Packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
           echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
-
-      - name: Publish to GitHub Packages
-        run: pnpm publish -r --access public --publish-branch tag-build-publish-action
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          pnpm publish -r --access public --publish-branch tag-build-publish-action
 
       # - name: Authenticate with npm
       #   if: success()

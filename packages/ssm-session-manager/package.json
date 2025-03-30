@@ -41,7 +41,7 @@
     "ws": "^8.18.1"
   },
   "dependencies": {
-    "@gkodes/smux": "file:../smux",
+    "@gkodes/smux": "workspace:*",
     "eventemitter3": "^5.0.1",
     "uuid": "^11.1.0"
   },

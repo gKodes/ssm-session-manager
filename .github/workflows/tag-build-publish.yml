@@ -83,7 +83,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm adduser --registry "https://npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" --always-auth
+          npm adduser --registry "https://npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" --always-auth
           pnpm config set registry https://npm.pkg.github.com/
           pnpm publish -r --access public --publish-branch tag-build-publish-action --registry=https://npm.pkg.github.com/
 

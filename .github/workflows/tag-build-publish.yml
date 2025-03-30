@@ -50,10 +50,7 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
         
       - name: Bump Versions
-        run: pnpm run -r version ${{ inputs.version }}
-
-      - name: Build Packages
-        run: pnpm run -r build
+        run: pnpm version ${{ inputs.version }}
 
       - name: Get release version
         id: release_tag
@@ -69,7 +66,10 @@ jobs:
               jq ".version = ${{ steps.release_tag.outputs.version }}" $jsr_json > $jsr_json
             fi
           done < <(find "./packages" -type d)
-
+          - name: Build Packages
+          run: pnpm run -r build
+  
+  
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1

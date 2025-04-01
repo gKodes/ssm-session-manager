@@ -37,6 +37,9 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
+      queue:
+        specifier: ^7.0.0
+        version: 7.0.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -1277,6 +1280,9 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  queue@7.0.0:
+    resolution: {integrity: sha512-sphwS7HdfQnvrJAXUNAUgpf9H/546IE3p/5Lf2jr71O4udEYlqAhkevykumas2FYuMkX/29JMOgrRdRoYZ/X9w==}
 
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
@@ -3015,6 +3021,8 @@ snapshots:
   prettier@3.5.3: {}
 
   punycode@2.3.1: {}
+
+  queue@7.0.0: {}
 
   readable-stream@3.6.2:
     dependencies:

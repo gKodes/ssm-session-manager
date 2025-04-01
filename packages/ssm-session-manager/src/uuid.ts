@@ -7,9 +7,9 @@ function toHex(source: Uint8Array): string {
 }
 
 export function uuidStringify(source: Uint8Array): string {
-  const uuid = `${toHex(source.slice(8, 12))}-${toHex(source.slice(12, 14))}-${toHex(
-    source.slice(14, 16)
-  )}-${toHex(source.slice(0, 2))}-${toHex(source.slice(2, 8))}`;
+  const uuid = `${toHex(source.subarray(8, 12))}-${toHex(source.subarray(12, 14))}-${toHex(
+    source.subarray(14, 16)
+  )}-${toHex(source.subarray(0, 2))}-${toHex(source.subarray(2, 8))}`;
 
   return uuid;
 }
@@ -18,8 +18,8 @@ export function uuidParse(uuid: string): Uint8Array {
   const segments: string[] = uuid.split("-");
 
   return new Uint8Array(
-    [segments[3], segments[4], segments[0], segments[1], segments[2]].flatMap((segment) =>
-      segment.match(/.{1,2}/g)!.map((c) => parseInt(c, 16))
+    [segments[3], segments[4], segments[0], segments[1], segments[2]].flatMap(
+      (segment) => segment.match(/.{1,2}/g)!.map((c) => parseInt(c, 16))
     )
   );
 }

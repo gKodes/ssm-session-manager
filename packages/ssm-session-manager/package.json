@@ -43,6 +43,7 @@
   "dependencies": {
     "@gkodes/smux": "workspace:*",
     "eventemitter3": "^5.0.1",
+    "queue": "^7.0.0",
     "uuid": "^11.1.0"
   },
   "peerDependencies": {

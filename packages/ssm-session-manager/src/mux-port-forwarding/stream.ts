@@ -17,8 +17,9 @@ export function writeFrames(
   config: FrameConfig = DefaultFrameConfig
 ) {
   for (let idx = 0; idx < data.byteLength; ) {
-    const frameData = new Uint8Array(
-      data.slice(idx, (idx += Math.min(data.byteLength, config.MaxFrameSize)))
+    const frameData = data.subarray(
+      idx,
+      (idx += Math.min(data.byteLength, config.MaxFrameSize))
     );
 
     connection.send({

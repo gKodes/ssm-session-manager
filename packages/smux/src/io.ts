@@ -6,8 +6,11 @@ export const sizeOfLength = 2;
 export const sizeOfSid = 4;
 export const headerSize = sizeOfVer + sizeOfCmd + sizeOfSid + sizeOfLength;
 
-export function deserializeFrame(buffer: ArrayBuffer): [Frame, number] {
-  const view = new DataView(buffer);
+export function deserializeFrame(
+  buffer: ArrayBufferLike,
+  byteOffset: number = 0
+): [Frame, number] {
+  const view = new DataView(buffer, byteOffset);
   let offset = 0;
 
   const ver = view.getInt8(offset);
@@ -18,7 +21,11 @@ export function deserializeFrame(buffer: ArrayBuffer): [Frame, number] {
   offset += sizeOfLength;
   const sid = view.getUint32(offset, true);
   offset += sizeOfSid;
-  const data = new Uint8Array(buffer.slice(headerSize, headerSize + length));
+  const data = new Uint8Array(
+    buffer,
+    byteOffset + headerSize,
+    Math.min(length, buffer.byteLength - headerSize - byteOffset)
+  );
 
   return [
     {

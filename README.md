@@ -7,11 +7,19 @@ A TypeScript/JavaScript library designed to simplify establishing and managing A
 ```typescript
 import { onExit } from "signal-exit";
 import { WebSocket } from "ws";
-import { SSMClient, StartSessionCommand, TerminateSessionCommand } from "@aws-sdk/client-ssm";
+import {
+  SSMClient,
+  StartSessionCommand,
+  TerminateSessionCommand,
+} from "@aws-sdk/client-ssm";
 import * as net from "node:net";
 import { Writable } from "node:stream";
 
-import { SSMSession, PortForwarding, MessageType } from "@gkodes/ssm-session-manager";
+import {
+  SSMSession,
+  PortForwarding,
+  MessageType,
+} from "@gkodes/ssm-session-manager";
 
 async function createSession(
   instanceId: string,
@@ -59,7 +67,9 @@ const ssmSession = new SSMSession(session, webSocket, {
 });
 
 const portForwarding = new PortForwarding(ssmSession);
-webSocket.once("open", () => ssmSession.startSession());
+webSocket.addEventListener("open", () => ssmSession.startSession(), {
+  once: true,
+});
 
 const server = net.createServer(
   { allowHalfOpen: true, noDelay: true },
@@ -85,12 +95,20 @@ const server = net.createServer(
       })
     );
 
-    stream.on("data", (data: Uint8Array) => {
-      socket.write(data);
+    stream.on("data", (segments: Uint8Array[]) => {
+      for (let data of segments) {
+        socket.write(data);
+      }
     });
 
     stream.on("end", () => {
       socket.end();
+    });
+
+    ssmSession.once(MessageType.ChannelClosed, () => {
+      if (!socket.destroyed) {
+        socket.destroySoon();
+      }
     });
 
     socket.on("error", (err) => {
@@ -100,17 +118,21 @@ const server = net.createServer(
 );
 
 ssmSession.once(MessageType.ChannelClosed, () => {
-  webSocket.terminate();
+  webSocket.close();
   if (server.listening) {
     server.close();
   }
 });
 
-webSocket.once("close", () => {
-  if (server.listening) {
-    server.close();
-  }
-});
+webSocket.addEventListener(
+  "close",
+  () => {
+    if (server.listening) {
+      server.close();
+    }
+  },
+  { once: true }
+);
 
 portForwarding.once("ready", () => {
   server.listen(6443, () => {
@@ -123,6 +145,6 @@ portForwarding.once("ready", () => {
 
 ### References
 
-* <https://github.com/bertrandmartel/aws-ssm-session>
-* <https://github.com/aws/amazon-ssm-agent>
-* <https://github.com/xtaci/smux>
+- <https://github.com/bertrandmartel/aws-ssm-session>
+- <https://github.com/aws/amazon-ssm-agent>
+- <https://github.com/xtaci/smux>

@@ -10,41 +10,47 @@ import {
 } from "../message";
 import { SSMSession } from "../socket";
 import { Stream } from "./stream";
-import { decodeJSON, isClientMessage } from "../io";
+import { decodeJSON } from "../io";
 import { headerSize } from "@gkodes/smux";
-import EventEmitter from "eventemitter3";
+import { EventEmitter } from "eventemitter3";
 
 export class StreamBuffer {
-  #buffer?: Uint8Array;
+  #buffer?: Uint8Array[];
+  #length: number;
   #consumed: number;
-  sid: number;
+  sid?: number;
   lastSequenceNumber: number;
 
-  constructor(sid: number, length: number, lastSequenceNumber: number) {
+  constructor(length: number, lastSequenceNumber: number, sid?: number) {
     this.sid = sid;
     this.lastSequenceNumber = lastSequenceNumber;
-    this.#buffer = new Uint8Array(length);
+    this.#length = length;
+    this.#buffer = []; //new Uint8Array(length);
     this.#consumed = 0;
   }
 
   get length(): number {
-    return this.#buffer?.byteLength ?? 0;
+    return this.#length;
+  }
+
+  get consumed(): number {
+    return this.#consumed;
   }
 
   canConsume(): boolean {
-    return this.length === this.#consumed;
+    return this.#length === this.#consumed;
   }
 
   write(source: Uint8Array, lastSequenceNumber: number): number {
-    const data = source.slice(0, this.length - this.#consumed);
-    this.#buffer?.set(data, this.#consumed);
+    const data = source.subarray(0, this.length - this.#consumed);
+    this.#buffer?.push(data);
     this.#consumed += data.byteLength;
     this.lastSequenceNumber = lastSequenceNumber;
 
     return data.byteLength;
   }
 
-  consume(): Uint8Array {
+  consume(): Uint8Array[] {
     const data = this.#buffer!;
     this.#buffer = undefined;
 
@@ -54,15 +60,18 @@ export class StreamBuffer {
 
 export type PortForwardingEvents = Record<"ready", any[]>;
 
-export class PortForwarding extends EventEmitter<PortForwardingEvents>  {
+export class PortForwarding extends EventEmitter<PortForwardingEvents> {
   #session: SSMSession;
   #nextStreamID: number = 1;
   #streams: Record<number, Stream> = {};
   #buffer?: StreamBuffer;
+  #rawBuffer?: Uint8Array;
+  clientVersion: string;
 
-  constructor(session: SSMSession) {
+  constructor(session: SSMSession, clientVersion: string = "1.2.707.0") {
     super();
     this.#session = session;
+    this.clientVersion = clientVersion;
 
     session.on(MessageType.OutputStream, this.#outputMessageHandler, this);
   }
@@ -77,7 +86,7 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents>  {
         );
 
         const handshakeResponse: HandshakeResponsePayload = {
-          ClientVersion: "1.2.707.0", // "1.2.339.0", // "ts-0.0.1.0", "1.2.0.0"
+          ClientVersion: this.clientVersion,
           ProcessedClientActions: [],
         };
 
@@ -122,14 +131,28 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents>  {
 
   #processStreamMessagePayload(message: ClientMessage) {
     console.info(
-      `Process new incoming stream data message. Sequence Number: ${message.sequenceNumber}`
+      `Process new incoming stream data message. Sequence Number: ${message.sequenceNumber} | ${message.payloadLength}`
     );
     if (message.payloadType !== PayloadType.Output) {
       console.warn(`Invalid message ${message.payloadType}`);
       return;
     }
 
-    const { payload, payloadLength, sequenceNumber } = message;
+    const { sequenceNumber } = message;
+    let { payload, payloadLength } = message;
+
+    if (this.#rawBuffer) {
+      var mergedPayload = new Uint8Array(
+        payloadLength + this.#rawBuffer.length
+      );
+      mergedPayload.set(this.#rawBuffer);
+      mergedPayload.set(payload, this.#rawBuffer.length);
+
+      payload = mergedPayload;
+      payloadLength = mergedPayload.byteLength;
+      console.info("Raw Buffer");
+      this.#rawBuffer = undefined;
+    }
 
     for (let pdx = 0; pdx < payloadLength; ) {
       // TODO: Not sure how sequence no. would work, may need to hand it??
@@ -138,17 +161,26 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents>  {
 
         if (this.#buffer.canConsume()) {
           const data = this.#buffer.consume();
-          this.#streams[this.#buffer.sid].emit("data", data);
+          this.#streams[this.#buffer.sid!].emit("data", data);
           console.info(
-            `Received payload of size ${data.byteLength} from datachannel.`
+            `Received payload of size ${this.#buffer.consumed} from datachannel. For stream ${this.#buffer.sid}`
           );
           this.#buffer = undefined;
         }
         continue;
       }
 
-      const frameData = payload.slice(pdx);
-      const [frame, lenght] = deserializeFrame(frameData.buffer);
+      const frameData = payload.subarray(pdx);
+      if (frameData.byteLength < 8) {
+        // NOTE: don't have enought data to parse frame
+        this.#rawBuffer = frameData;
+        return;
+      }
+
+      const [frame, lenght] = deserializeFrame(
+        frameData.buffer,
+        frameData.byteOffset
+      );
       pdx += lenght + headerSize;
 
       switch (frame.cmd) {
@@ -167,18 +199,18 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents>  {
           delete this.#streams[frame.sid];
           break;
         default:
-          if (lenght + headerSize === payloadLength) {
+          if (frame.data.byteLength === lenght) {
             console.info(
-              `Received payload of size ${lenght} from datachannel.`
+              `Received payload of size ${lenght} from datachannel. For stream ${frame.sid}`
             );
-            this.#streams[frame.sid].emit("data", frame.data);
-            return;
+            this.#streams[frame.sid].emit("data", [frame.data]);
+            continue;
           }
 
           (this.#buffer = new StreamBuffer(
-            frame.sid,
             lenght,
-            sequenceNumber
+            sequenceNumber,
+            frame.sid
           )).write(frame.data, sequenceNumber);
       }
     }

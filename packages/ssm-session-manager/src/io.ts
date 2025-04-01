@@ -53,7 +53,7 @@ export function deserializeClientMessage(
   const headerLength = view.getUint32(offset, false);
   offset += ClientMessage_HLLength;
   const messageType = textDecoder
-    .decode(buffer.slice(offset, offset + 32))
+    .decode(buffer.slice(offset, offset + ClientMessage_MessageTypeLength))
     .trim()
     .replaceAll("\x00", "") as MessageType;
   offset += ClientMessage_MessageTypeLength;
@@ -66,18 +66,20 @@ export function deserializeClientMessage(
   const flags = view.getBigUint64(offset, false);
   offset += ClientMessage_FlagsLength;
   const messageId = uuidStringify(
-    new Uint8Array(buffer.slice(offset, offset + ClientMessage_MessageIdLength))
+    new Uint8Array(buffer, offset, ClientMessage_MessageIdLength)
   );
   offset += ClientMessage_MessageIdLength;
   const payloadDigest = new Uint8Array(
-    buffer.slice(offset, offset + ClientMessage_PayloadDigestLength)
+    buffer,
+    offset,
+    ClientMessage_PayloadDigestLength
   );
   offset += ClientMessage_PayloadDigestLength;
   const payloadType = view.getUint32(offset, false) as PayloadType;
   offset += ClientMessage_PayloadTypeLength;
   const payloadLength = view.getUint32(offset, false);
   offset += ClientMessage_PayloadLengthLength;
-  const payload = new Uint8Array(buffer.slice(offset, offset + payloadLength));
+  const payload = new Uint8Array(buffer, offset, payloadLength);
 
   if (validateDigest) {
     const computedDigest = calculateDigest(payload);

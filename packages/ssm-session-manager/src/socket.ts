@@ -1,4 +1,5 @@
 import { EventEmitter } from "eventemitter3";
+import Queue from 'queue';
 import {
   AcknowledgeContent,
   ClientMessage,
@@ -8,7 +9,6 @@ import {
 import { StartSessionCommandOutput } from "@aws-sdk/client-ssm";
 import { uuidv4 } from "./uuid";
 import {
-  decodeJSON,
   isMessage,
   Message,
   deserializeClientMessage,
@@ -52,6 +52,7 @@ export class SSMSession extends EventEmitter<SSMSessionEvents> {
   #downStreamSequenceNumber: number = 0;
   #options?: ClientMessageSocketOptions;
   #session: StartSessionCommandOutput;
+  #incommingMessages: Queue = new Queue({ autostart: true, concurrency: 1 });
 
   constructor(
     session: StartSessionCommandOutput,
@@ -108,16 +109,11 @@ export class SSMSession extends EventEmitter<SSMSessionEvents> {
         }
       }
 
-      if (message.messageType === MessageType.Acknowledge) {
-        const acknowlageContent = decodeJSON(
-          message.payload
-        ) as AcknowledgeContent;
-        console.info(
-          `received acknowledgement for ${acknowlageContent.AcknowledgedMessageId} : ${acknowlageContent.AcknowledgedMessageSequenceNumber}`
-        );
-      }
-
-      this.emit(message.messageType, message);
+      // NOTE: this is to handle back prussere
+      this.#incommingMessages.push(async (next) => {
+        this.emit(message.messageType, message);
+        next!();
+      })
     };
   }
 

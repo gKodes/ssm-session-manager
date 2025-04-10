@@ -142,6 +142,7 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
     let { payload, payloadLength } = message;
 
     if (this.#rawBuffer) {
+      // TODO: Make this also into an array
       var mergedPayload = new Uint8Array(
         payloadLength + this.#rawBuffer.length
       );

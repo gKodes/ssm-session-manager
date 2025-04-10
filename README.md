@@ -76,7 +76,7 @@ const server = net.createServer(
   (socket) => {
     const stream = portForwarding.newStream();
 
-    console.info(`Client stream opened ${stream.sid}`);
+    // console.info(`Client stream opened ${stream.sid}`);
 
     socket.pipe(
       new Writable({

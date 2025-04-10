@@ -130,9 +130,9 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
   }
 
   #processStreamMessagePayload(message: ClientMessage) {
-    console.info(
-      `Process new incoming stream data message. Sequence Number: ${message.sequenceNumber} | ${message.payloadLength}`
-    );
+    // console.info(
+    //   `Process new incoming stream data message. Sequence Number: ${message.sequenceNumber} | ${message.payloadLength}`
+    // );
     if (message.payloadType !== PayloadType.Output) {
       console.warn(`Invalid message ${message.payloadType}`);
       return;

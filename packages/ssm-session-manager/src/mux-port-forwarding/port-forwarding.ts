@@ -120,9 +120,9 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
           message.payload
         );
 
-        console.debug(
-          `Handshake Complete. Handshake time to complete is: ${handshakeComplete.HandshakeTimeToComplete} seconds`
-        );
+        // console.debug(
+        //   `Handshake Complete. Handshake time to complete is: ${handshakeComplete.HandshakeTimeToComplete} seconds`
+        // );
 
         this.emit("ready");
         break;
@@ -151,7 +151,6 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
 
       payload = mergedPayload;
       payloadLength = mergedPayload.byteLength;
-      console.info("Raw Buffer");
       this.#rawBuffer = undefined;
     }
 
@@ -163,9 +162,9 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
         if (this.#buffer.canConsume()) {
           const data = this.#buffer.consume();
           this.#streams[this.#buffer.sid!].emit("data", data);
-          console.info(
-            `Received payload of size ${this.#buffer.consumed} from datachannel. For stream ${this.#buffer.sid}`
-          );
+          // console.info(
+          //   `Received payload of size ${this.#buffer.consumed} from datachannel. For stream ${this.#buffer.sid}`
+          // );
           this.#buffer = undefined;
         }
         continue;
@@ -201,9 +200,9 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
           break;
         default:
           if (frame.data.byteLength === lenght) {
-            console.info(
-              `Received payload of size ${lenght} from datachannel. For stream ${frame.sid}`
-            );
+            // console.info(
+            //   `Received payload of size ${lenght} from datachannel. For stream ${frame.sid}`
+            // );
             this.#streams[frame.sid].emit("data", [frame.data]);
             continue;
           }

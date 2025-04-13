@@ -44,7 +44,7 @@ export function decodeJSON(input: AllowSharedBufferSource) {
 }
 
 export function deserializeClientMessage(
-  buffer: ArrayBuffer,
+  buffer: ArrayBuffer, // ArrayBufferLike
   validateDigest: boolean = false
 ): ClientMessage {
   const view = new DataView(buffer);

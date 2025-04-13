@@ -21,7 +21,7 @@ function startPings(connection: WebSocketLike, sessionId?: string) {
   }
 
   connection.ping!("keepalive");
-  // console.info(`Send ping. Message. for ${sessionId}`);
+  console.info(`Send ping. Message. for ${sessionId}`);
   setTimeout(startPings.bind(null, connection, sessionId), 5 * 60000); // 5 min
 }
 
@@ -83,17 +83,17 @@ export class SSMSession extends EventEmitter<SSMSessionEvents> {
 
       const message = deserializeClientMessage(data as ArrayBuffer);
 
-      // console.info(
-      //   `Processing stream data message of type: ${message.messageType}`
-      // );
+      console.info(
+        `Processing stream data message of type: ${message.messageType}`
+      );
 
       if (message.messageType !== MessageType.Acknowledge) {
         if (this.#downStreamSequenceNumber !== message.sequenceNumber) {
-          // console.info(
-          //   `Unexpected sequence message received. Received Sequence Number: ${
-          //     message.sequenceNumber
-          //   }. Expected Sequence Number: ${this.#downStreamSequenceNumber}`
-          // );
+          console.info(
+            `Unexpected sequence message received. Received Sequence Number: ${
+              message.sequenceNumber
+            }. Expected Sequence Number: ${this.#downStreamSequenceNumber}`
+          );
 
           if (message.messageType === MessageType.ChannelClosed) {
             this.emit(message.messageType, message);
@@ -142,9 +142,9 @@ export class SSMSession extends EventEmitter<SSMSessionEvents> {
       this.#upstreamSocket.send(data);
 
       if (message.messageType !== MessageType.Acknowledge) {
-        // console.info(
-        //   `Sending message with seq number: ${message.sequenceNumber}`
-        // );
+        console.info(
+          `Sending message with seq number: ${message.sequenceNumber}`
+        );
       }
 
       return messageId;

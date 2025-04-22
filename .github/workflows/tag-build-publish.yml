@@ -54,7 +54,7 @@ jobs:
 
       - name: Get release version
         id: release_tag
-        run: echo "version=$(jq '.version' ./package.json)" >> $GITHUB_OUTPUT;
+        run: echo "version=$(jq -r '.version' ./package.json)" >> $GITHUB_OUTPUT;
 
       - name: Update version in packages
         run: |

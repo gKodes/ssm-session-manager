@@ -47,23 +47,55 @@ export function deserializeClientMessage(
   buffer: ArrayBuffer, // ArrayBufferLike
   validateDigest: boolean = false
 ): ClientMessage {
-  const view = new DataView(buffer);
+  const view = new Uint8Array(buffer);
+  // const view = new DataView(buffer);
   let offset = 0;
 
-  const headerLength = view.getUint32(offset, false);
+  const headerLength = view[offset];
   offset += ClientMessage_HLLength;
   const messageType = textDecoder
     .decode(buffer.slice(offset, offset + ClientMessage_MessageTypeLength))
     .trim()
     .replaceAll("\x00", "") as MessageType;
   offset += ClientMessage_MessageTypeLength;
-  const schemaVersion = view.getUint32(offset, false);
+  const schemaVersion =
+    (view[offset] << 24) |
+    (view[offset + 1] << 16) |
+    (view[offset + 2] << 8) |
+    view[offset + 3];
   offset += ClientMessage_SchemaVersionLength;
-  const createdDate = new Date(Number(view.getBigUint64(offset, false)));
+  const createdDate = new Date(
+    Number(
+      (BigInt(view[offset]) << 56n) |
+        (BigInt(view[offset + 1]) << 48n) |
+        (BigInt(view[offset + 2]) << 40n) |
+        (BigInt(view[offset + 3]) << 32n) |
+        (BigInt(view[offset + 4]) << 24n) |
+        (BigInt(view[offset + 5]) << 16n) |
+        (BigInt(view[offset + 6]) << 8n) |
+        BigInt(view[offset + 7])
+    )
+  );
   offset += ClientMessage_CreatedDateLength;
-  const sequenceNumber = view.getBigInt64(offset, false);
+  const sequenceNumber =
+    (BigInt(view[offset]) << 56n) |
+    (BigInt(view[offset + 1]) << 48n) |
+    (BigInt(view[offset + 2]) << 40n) |
+    (BigInt(view[offset + 3]) << 32n) |
+    (BigInt(view[offset + 4]) << 24n) |
+    (BigInt(view[offset + 5]) << 16n) |
+    (BigInt(view[offset + 6]) << 8n) |
+    BigInt(view[offset + 7]);
   offset += ClientMessage_SequenceNumberLength;
-  const flags = view.getBigUint64(offset, false);
+  const flags =
+    (BigInt(view[offset]) << 56n) |
+    (BigInt(view[offset + 1]) << 48n) |
+    (BigInt(view[offset + 2]) << 40n) |
+    (BigInt(view[offset + 3]) << 32n) |
+    (BigInt(view[offset + 4]) << 24n) |
+    (BigInt(view[offset + 5]) << 16n) |
+    (BigInt(view[offset + 6]) << 8n) |
+    BigInt(view[offset + 7]);
   offset += ClientMessage_FlagsLength;
   const messageId = uuidStringify(
     new Uint8Array(buffer, offset, ClientMessage_MessageIdLength)
@@ -75,9 +107,16 @@ export function deserializeClientMessage(
     ClientMessage_PayloadDigestLength
   );
   offset += ClientMessage_PayloadDigestLength;
-  const payloadType = view.getUint32(offset, false) as PayloadType;
+  const payloadType = ((view[offset] << 24) |
+    (view[offset + 1] << 16) |
+    (view[offset + 2] << 8) |
+    view[offset + 3]) as PayloadType;
   offset += ClientMessage_PayloadTypeLength;
-  const payloadLength = view.getUint32(offset, false);
+  const payloadLength =
+    (view[offset] << 24) |
+    (view[offset + 1] << 16) |
+    (view[offset + 2] << 8) |
+    view[offset + 3];
   offset += ClientMessage_PayloadLengthLength;
   const payload = new Uint8Array(buffer, offset, payloadLength);
 
@@ -152,7 +191,9 @@ export function serializeClientMessage(
   offset += ClientMessage_MessageIdLength;
 
   if (!message.payloadDigest) {
-    message.payloadDigest = calculateDigest(message.payload);
+    message.payloadDigest = calculateDigest(
+      message.payload
+    ) as Uint8Array<ArrayBuffer>;
   }
 
   new Uint8Array(buffer, offset, ClientMessage_PayloadDigestLength).set(

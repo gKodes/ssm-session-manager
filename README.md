@@ -17,8 +17,8 @@ import { Writable } from "node:stream";
 
 import {
   SSMSession,
-  PortForwarding,
   MessageType,
+  portForawrdMessageHandler
 } from "@gkodes/ssm-session-manager";
 
 async function createSession(
@@ -66,8 +66,15 @@ const ssmSession = new SSMSession(session, webSocket, {
   autoAcknowledge: true,
 });
 
-const portForwarding = new PortForwarding(ssmSession);
-webSocket.addEventListener("open", () => ssmSession.startSession(), {
+const [portForwarding, messageHandler] = portForawrdMessageHandler(
+  ssmSession,
+  fileURLToPath(resolve(
+    import.meta.url,
+    "src/handlers/multi-threaded/worker/dserializer.ts"
+  ))
+);
+
+webSocket.addEventListener("open", () => ssmSession.startSession(messageHandler), {
   once: true,
 });
 
@@ -76,7 +83,7 @@ const server = net.createServer(
   (socket) => {
     const stream = portForwarding.newStream();
 
-    // console.info(`Client stream opened ${stream.sid}`);
+    console.info(`Client stream opened ${stream.sid}`);
 
     socket.pipe(
       new Writable({
@@ -135,7 +142,7 @@ webSocket.addEventListener(
 );
 
 portForwarding.once("ready", () => {
-  server.listen(6443, () => {
+  server.listen(8080, () => {
     console.log(
       `Listing on ${server.address().port} for sessionId ${session.SessionId}.`
     );

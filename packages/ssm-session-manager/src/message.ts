@@ -120,10 +120,10 @@ export interface ClientMessage {
   sequenceNumber: number;
   flags: number;
   messageId: string;
-  payloadDigest: Uint8Array;
+  payloadDigest: Uint8Array<ArrayBuffer>;
   payloadType: PayloadType;
   payloadLength: number;
-  payload: Uint8Array;
+  payload: Uint8Array<ArrayBuffer>;
 }
 
 // * HL - HeaderLength is a 4 byte integer that represents the header length.

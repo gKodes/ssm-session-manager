@@ -10,16 +10,20 @@ export function deserializeFrame(
   buffer: ArrayBufferLike,
   byteOffset: number = 0
 ): [Frame, number] {
-  const view = new DataView(buffer, byteOffset);
+  const view = new Uint8Array(buffer, byteOffset);
   let offset = 0;
 
-  const ver = view.getInt8(offset);
+  const ver = view[offset];
   offset += sizeOfVer;
-  const cmd = view.getInt8(offset);
+  const cmd = view[offset];
   offset += sizeOfCmd;
-  const length = view.getUint16(offset, true);
+  const length = view[offset] | (view[offset + 1] << 8);
   offset += sizeOfLength;
-  const sid = view.getUint32(offset, true);
+  const sid =
+    view[offset] |
+    (view[offset + 1] << 8) |
+    (view[offset + 2] << 16) |
+    (view[offset + 3] << 24);
   offset += sizeOfSid;
   const data = new Uint8Array(
     buffer,
@@ -60,4 +64,18 @@ export function serializeFrame(
   }
 
   return buffer;
+}
+
+export function isValidFrame(
+  buffer: ArrayBufferLike,
+  byteOffset: number = 0
+): boolean {
+  const view = new DataView(buffer, byteOffset);
+  let offset = 0;
+
+  const ver = view.getInt8(offset);
+  offset += sizeOfVer;
+  const cmd = view.getInt8(offset);
+
+  return [1, 2].includes(ver) && [1, 2, 3, 4].includes(cmd);
 }

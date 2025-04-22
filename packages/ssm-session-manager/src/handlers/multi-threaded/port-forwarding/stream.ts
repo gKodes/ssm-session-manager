@@ -6,8 +6,8 @@ import {
   DefaultFrameConfig,
   serializeFrame,
 } from "@gkodes/smux";
-import { SSMSession } from "../socket";
-import { MessageType, PayloadType } from "../message";
+import { SSMSession } from "../../../socket";
+import { MessageType, PayloadType } from "../../../message";
 import EventEmitter from "eventemitter3";
 
 export function writeFrames(

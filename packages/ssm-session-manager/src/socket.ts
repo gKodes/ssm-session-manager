@@ -1,5 +1,4 @@
 import { EventEmitter } from "eventemitter3";
-import Queue from 'queue';
 import {
   AcknowledgeContent,
   ClientMessage,
@@ -8,12 +7,8 @@ import {
 } from "./message";
 import { StartSessionCommandOutput } from "@aws-sdk/client-ssm";
 import { uuidv4 } from "./uuid";
-import {
-  isMessage,
-  Message,
-  deserializeClientMessage,
-  serializeClientMessage,
-} from "./io";
+import { isMessage, Message, serializeClientMessage } from "./io";
+import { queuedMessageHandler } from "./handlers/queued";
 
 function startPings(connection: WebSocketLike, sessionId?: string) {
   if (connection.readyState !== WebSocket.OPEN) {
@@ -49,18 +44,10 @@ export type SSMSessionEvents = Record<MessageType, any[]>;
 export class SSMSession extends EventEmitter<SSMSessionEvents> {
   #upstreamSocket: WebSocketLike;
   #upstreamSequenceNumber: number = 0;
-  #downStreamSequenceNumber: number = 0;
-  #options?: ClientMessageSocketOptions;
   #session: StartSessionCommandOutput;
-  #incommingMessages: Queue = new Queue({ autostart: true, concurrency: 1 });
 
-  constructor(
-    session: StartSessionCommandOutput,
-    socket: WebSocketLike,
-    options?: ClientMessageSocketOptions
-  ) {
+  constructor(session: StartSessionCommandOutput, socket: WebSocketLike) {
     super();
-    this.#options = options;
     this.#session = session;
     this.#upstreamSocket = socket;
     this.#upstreamSocket.binaryType = "arraybuffer";
@@ -74,54 +61,17 @@ export class SSMSession extends EventEmitter<SSMSessionEvents> {
     this.#upstreamSocket.onerror = (error) => {
       console.log(`WebSocket error: ${error}`);
     };
-
-    this.#upstreamSocket.onmessage = (event) => {
-      const { data } = event;
-      if (!(data instanceof ArrayBuffer)) {
-        console.warn("not an binary message");
-      }
-
-      const message = deserializeClientMessage(data as ArrayBuffer);
-
-      console.info(
-        `Processing stream data message of type: ${message.messageType}`
-      );
-
-      if (message.messageType !== MessageType.Acknowledge) {
-        if (this.#downStreamSequenceNumber !== message.sequenceNumber) {
-          console.info(
-            `Unexpected sequence message received. Received Sequence Number: ${
-              message.sequenceNumber
-            }. Expected Sequence Number: ${this.#downStreamSequenceNumber}`
-          );
-
-          if (message.messageType === MessageType.ChannelClosed) {
-            this.emit(message.messageType, message);
-          }
-
-          return;
-        }
-
-        this.#downStreamSequenceNumber++;
-
-        if (this.#options?.autoAcknowledge) {
-          this.sendAcknowledge(message);
-        }
-      }
-
-      // NOTE: this is to handle back prussere
-      this.#incommingMessages.push(async (next) => {
-        this.emit(message.messageType, message);
-        next!();
-      })
-    };
   }
 
   get readyState(): number {
     return this.#upstreamSocket.readyState;
   }
 
-  startSession(): void {
+  startSession(
+    messageHandler: WebSocketLike["onmessage"] = queuedMessageHandler
+  ): void {
+    this.#upstreamSocket.onmessage = messageHandler;
+
     this.#upstreamSocket.send(
       JSON.stringify({
         MessageSchemaVersion: "1.0",

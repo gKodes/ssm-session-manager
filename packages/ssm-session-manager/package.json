@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "build": "NODE_ENV=production tsup src/index.ts src/workers/worker/dserializer.ts --format esm,cjs --dts",
     "lint": "eslint . --ext .ts",
     "test": "vitest"
   },
@@ -47,7 +47,8 @@
     "@gkodes/smux": "workspace:*",
     "eventemitter3": "^5.0.1",
     "queue": "^7.0.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "workerpool": "^9.2.0"
   },
   "peerDependencies": {
     "@aws-sdk/client-ssm": "^3.775.0",

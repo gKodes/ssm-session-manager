@@ -1,4 +1,4 @@
-import { cmdNOP, cmdFIN, cmdSYN, deserializeFrame, Frame } from "@gkodes/smux";
+import { cmdNOP, cmdFIN, cmdSYN, deserializeFrame } from "@gkodes/smux";
 import {
   ActionStatus,
   ClientMessage,
@@ -7,12 +7,11 @@ import {
   HandshakeResponsePayload,
   MessageType,
   PayloadType,
-} from "../message";
-import { SSMSession } from "../socket";
+} from "../../../message";
+import { SSMSession } from "../../../socket";
 import { Stream } from "./stream";
-import { decodeJSON } from "../io";
+import { decodeJSON } from "../../../io";
 import { headerSize } from "@gkodes/smux";
-import { EventEmitter } from "eventemitter3";
 
 export class StreamBuffer {
   #buffer?: Uint8Array[];
@@ -60,23 +59,27 @@ export class StreamBuffer {
 
 export type PortForwardingEvents = Record<"ready", any[]>;
 
-export class PortForwarding extends EventEmitter<PortForwardingEvents> {
+export class PortForwarding {
   #session: SSMSession;
   #nextStreamID: number = 1;
   #streams: Record<number, Stream> = {};
   #buffer?: StreamBuffer;
   #rawBuffer?: Uint8Array;
+  #handShakeCompleted: boolean = false;
   clientVersion: string;
 
+  onready?: () => void;
+
   constructor(session: SSMSession, clientVersion: string = "1.2.707.0") {
-    super();
     this.#session = session;
     this.clientVersion = clientVersion;
-
-    session.on(MessageType.OutputStream, this.#outputMessageHandler, this);
   }
 
-  #outputMessageHandler(message: ClientMessage) {
+  get isHandShakeCompeleted(): boolean {
+    return this.#handShakeCompleted;
+  }
+
+  outputMessageHandler(message: ClientMessage) {
     switch (message.payloadType) {
       case PayloadType.HandshakeRequestPayloadType:
         console.debug("Processing HandshakeRequest message");
@@ -104,18 +107,7 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
         });
         break;
       case PayloadType.HandshakeCompletePayloadType:
-        this.#session.removeListener(
-          MessageType.OutputStream,
-          this.#outputMessageHandler,
-          this
-        );
-
-        this.#session.addListener(
-          MessageType.OutputStream,
-          this.#processStreamMessagePayload,
-          this
-        );
-
+        this.#handShakeCompleted = true;
         const handshakeComplete: HandshakeCompletePayload = decodeJSON(
           message.payload
         );
@@ -124,12 +116,12 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
           `Handshake Complete. Handshake time to complete is: ${handshakeComplete.HandshakeTimeToComplete} seconds`
         );
 
-        this.emit("ready");
+        this.onready?.();
         break;
     }
   }
 
-  #processStreamMessagePayload(message: ClientMessage) {
+  processStreamMessagePayload(message: ClientMessage) {
     console.info(
       `Process new incoming stream data message. Sequence Number: ${message.sequenceNumber} | ${message.payloadLength}`
     );
@@ -181,6 +173,7 @@ export class PortForwarding extends EventEmitter<PortForwardingEvents> {
         frameData.buffer,
         frameData.byteOffset
       );
+      // console.info(frame, 'of length', lenght);
       pdx += lenght + headerSize;
 
       switch (frame.cmd) {

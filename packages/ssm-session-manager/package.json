@@ -1,6 +1,6 @@
 {
   "name": "@gkodes/ssm-session-manager",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "library designed to simplify establishing and managing AWS SSM Session",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
